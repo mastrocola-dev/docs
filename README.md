@@ -16,7 +16,7 @@ Numbered, immutable once accepted, superseded rather than edited.
 
 | ADR | Decision | Status |
 |---|---|---|
-| ADR-001 | Multi-repo over monorepo | Draft |
+| [ADR-001](adr/001-multi-repo.md) | Multi-repo over monorepo | Accepted |
 
 Format: context, decision, consequences. One page maximum.
 
@@ -24,7 +24,7 @@ Format: context, decision, consequences. One page maximum.
 
 | Runbook | Covers |
 |---|---|
-| `github-azure-oidc.md` | Federated credential setup, immutable subject format, diagnosing `AADSTS700213` | 
+| [github-azure-oidc](runbooks/github-azure-oidc.md) | Federated credential setup, immutable subject format, diagnosing `AADSTS700213` |
 
 ## Conventions
 
