@@ -1,7 +1,7 @@
 # ADR-003: Agent language, LLM integration, and RAG decoupling
 
-**Status: Accepted**
-**Date: 2026-09-23**
+**Status:** Accepted
+**Date:** 2026-09-23
 
 ## Context
 
