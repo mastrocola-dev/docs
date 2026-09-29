@@ -1,0 +1,100 @@
+name: adr-index
+
+on:
+  pull_request:
+    paths: ['adr/**', 'index/**', '.github/workflows/adr-index.yml']
+  push:
+    branches: [main]
+    paths: ['adr/**', 'index/**', '.github/workflows/adr-index.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: adr-index-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          path: docs
+
+      - id: tree
+        run: |
+          echo "current=$(git -C docs rev-parse HEAD:adr)" >> "$GITHUB_OUTPUT"
+          echo "indexed=$(jq -r '.adrTree // empty' docs/index/adrs.json 2>/dev/null)" >> "$GITHUB_OUTPUT"
+
+      - if: steps.tree.outputs.current != steps.tree.outputs.indexed
+        uses: actions/checkout@v4
+        with:
+          repository: mastrocola-dev/service-agent
+          path: service-agent
+
+      - if: steps.tree.outputs.current != steps.tree.outputs.indexed
+        uses: actions/checkout@v4
+        with:
+          repository: mastrocola-dev/mcp-docs
+          path: mcp-docs
+
+      - if: steps.tree.outputs.current != steps.tree.outputs.indexed
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: service-agent/.nvmrc
+          cache: npm
+          cache-dependency-path: |
+            service-agent/package-lock.json
+            mcp-docs/package-lock.json
+
+      - if: steps.tree.outputs.current != steps.tree.outputs.indexed
+        run: |
+          npm ci --prefix service-agent
+          npm ci --prefix mcp-docs
+
+      - if: steps.tree.outputs.current != steps.tree.outputs.indexed
+        working-directory: service-agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TRACE_DIR: ${{ runner.temp }}/traces
+        run: npm start --silent -- --agent adr-index 'Index all ADRs' > "$RUNNER_TEMP/adrs.json"
+
+      - if: always() && steps.tree.outputs.current != steps.tree.outputs.indexed
+        uses: actions/upload-artifact@v4
+        with:
+          name: trace
+          path: ${{ runner.temp }}/traces
+          if-no-files-found: ignore
+
+      - if: steps.tree.outputs.current != steps.tree.outputs.indexed
+        env:
+          ADR_TREE: ${{ steps.tree.outputs.current }}
+        run: |
+          mkdir -p docs/index
+          jq --arg adrTree "$ADR_TREE" \
+             --arg generatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+             --arg model "$(jq -r .model service-agent/agents/adr-index/agent.json)" \
+             --arg serviceAgent "$(git -C service-agent rev-parse HEAD)" \
+             '{ adrTree: $adrTree, generatedAt: $generatedAt, model: $model, serviceAgent: $serviceAgent, adrs: (.adrs | sort_by(.id)) }' \
+             "$RUNNER_TEMP/adrs.json" > docs/index/adrs.json
+          git -C docs config user.name 'github-actions[bot]'
+          git -C docs config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C docs add index/adrs.json
+          git -C docs commit -m 'Regenerate ADR index'
+          git -C docs push
+
+  verify:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          test "$(git rev-parse HEAD:adr)" = "$(jq -r .adrTree index/adrs.json)" || {
+            echo '::error file=index/adrs.json::Stale ADR index: open a pull request touching adr/ to regenerate it'
+            exit 1
+          }
