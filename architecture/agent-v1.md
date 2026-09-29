@@ -23,3 +23,7 @@ Single-agent baseline. Tools are exposed exclusively through MCP servers, keepin
 | LLM API | Reasoning and tool selection |
 | State | Checkpoints for resume after failure or approval pause; prerequisite for human approval |
 | Observability | Structured traces per model and tool call |
+
+## Implementation
+
+The MVP is implemented in [service-agent](https://github.com/mastrocola-dev/service-agent) (CLI interface, control loop, context, guardrails, MCP client, structured output, JSONL traces) and [mcp-docs](https://github.com/mastrocola-dev/mcp-docs), the first MCP server. State, context compaction and human approval are not implemented yet. Operational details live in each repository's README; cross-repository conventions are recorded in [ADR-004](../adr/004-typescript-without-build.md).

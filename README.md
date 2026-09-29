@@ -19,8 +19,15 @@ Numbered, immutable once accepted, superseded rather than edited.
 | [ADR-001](adr/001-multi-repo.md) | Multi-repo over monorepo | Accepted |
 | [ADR-002](adr/002-public-site-hosting.md) | Public site on Static Web Apps with DNS as code | Accepted |
 | [ADR-003](adr/003-language-llm-rag.md) | Agent language, LLM integration, and RAG decoupling | Accepted |
+| [ADR-004](adr/004-typescript-without-build.md) | TypeScript without a build step and MCP server distribution | Accepted |
 
 Format: context, decision, consequences. One page maximum.
+
+## Architecture
+
+| Document | Describes |
+|---|---|
+| [agent-v1](architecture/agent-v1.md) | Single-agent baseline: control loop, MCP client, guardrails, state, observability |
 
 ## Runbooks
 
