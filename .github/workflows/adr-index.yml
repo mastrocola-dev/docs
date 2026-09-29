@@ -94,7 +94,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          test "$(git rev-parse HEAD:adr)" = "$(jq -r .adrTree index/adrs.json)" || {
-            echo '::error file=index/adrs.json::Stale ADR index: open a pull request touching adr/ to regenerate it'
-            exit 1
-          }
+          test -f index/adrs.json || { echo '::error::Missing ADR index: it is generated only on pull requests touching adr/'; exit 1; }
+          test "$(git rev-parse HEAD:adr)" = "$(jq -r .adrTree index/adrs.json)" || { echo '::error file=index/adrs.json::Stale ADR index: adr/ changed without a pull request; open one touching adr/ to regenerate it'; exit 1; }
