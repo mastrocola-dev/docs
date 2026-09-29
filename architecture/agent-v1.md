@@ -18,8 +18,8 @@ Single-agent baseline. Tools are exposed exclusively through MCP servers, keepin
 |---|---|
 | Control loop | Runs the reason-act-observe cycle; enforces stop conditions |
 | Context | Holds conversation and step history; compacts when needed |
-| Guardrails | Step limit, timeouts, human approval for side-effecting actions |
+| Guardrails | Step limit, run and tool timeouts, token budget, tool allowlist; human approval for side-effecting actions arrives with State |
 | MCP client | Tool discovery and invocation via MCP |
 | LLM API | Reasoning and tool selection |
-| State | Checkpoints for resume after failure or approval pause |
+| State | Checkpoints for resume after failure or approval pause; prerequisite for human approval |
 | Observability | Structured traces per model and tool call |
