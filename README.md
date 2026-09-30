@@ -36,6 +36,7 @@ Format: context, decision, consequences. One page maximum.
 | Runbook | Covers |
 |---|---|
 | [github-azure-oidc](runbooks/github-azure-oidc.md) | Federated credential setup, immutable subject format, diagnosing `AADSTS700213` |
+| [repository-rulesets](runbooks/repository-rulesets.md) | Default branch protection shared by every repository, and how to apply it |
 | [static-web-apps](runbooks/static-web-apps.md) | Custom domain validation patterns, async operation RBAC, orphaned domain recovery, attribute ownership across pipelines |
 
 ## Generated index
