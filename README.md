@@ -42,7 +42,8 @@ Format: context, decision, consequences. One page maximum.
 
 [`index/adrs.json`](index/adrs.json) is written by the [`adr-index`](https://github.com/mastrocola-dev/service-agent/tree/main/agents/adr-index) agent and read by [mastrocola.dev](https://mastrocola.dev) at page load ([ADR-005](adr/005-agent-generated-content.md)).
 
-- A pull request touching `adr/` regenerates it and pushes the result to the same branch; review it with the ADR
+- A pull request touching `adr/` regenerates it and pushes the result to the same branch; review it with the ADR and pull before pushing again
+- Regeneration rewrites every summary, so unrelated records may change wording; the index is skipped entirely when `adr/` is unchanged
 - It records the tree hash of `adr/` it came from; pushes to `main` fail when that hash is stale
 - Before committing, the index is checked against `adr/`: one record per document, unique ids, and every `path` present on disk
 - The run's trace is attached to the workflow as the `trace` artifact
