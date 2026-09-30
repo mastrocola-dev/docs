@@ -44,6 +44,7 @@ Format: context, decision, consequences. One page maximum.
 
 - A pull request touching `adr/` regenerates it and pushes the result to the same branch; review it with the ADR
 - It records the tree hash of `adr/` it came from; pushes to `main` fail when that hash is stale
+- Before committing, the index is checked against `adr/`: one record per document, unique ids, and every `path` present on disk
 - The run's trace is attached to the workflow as the `trace` artifact
 - Requires the repository secret `ANTHROPIC_API_KEY`, from an Anthropic workspace with a spend limit
 

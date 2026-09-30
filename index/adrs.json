@@ -1,0 +1,43 @@
+{
+  "adrTree": "17477cd07ef8b04d91daeed44f9e2143f026cb55",
+  "generatedAt": "2026-09-30T00:04:13Z",
+  "model": "claude-haiku-4-5",
+  "serviceAgent": "707c5457873a9b4db38f247bfebd64cb9c391d46",
+  "adrs": [
+    {
+      "id": "ADR-001",
+      "title": "Multi-repo over monorepo",
+      "status": "Accepted",
+      "decision": "The organization uses one repository per concern under the mastrocola-dev organization, with cross-cutting documentation centralized in a docs repository and operational documentation living with the code it operates.",
+      "path": "adr/001-multi-repo.md"
+    },
+    {
+      "id": "ADR-002",
+      "title": "Public site on Azure Static Web Apps with DNS as code",
+      "status": "Accepted",
+      "decision": "The public site is hosted on Azure Static Web Apps Free plan with Cloudflare-managed DNS records for mastrocola.dev, achieved through infrastructure-as-code in Terraform.",
+      "path": "adr/002-public-site-hosting.md"
+    },
+    {
+      "id": "ADR-003",
+      "title": "Agent language, LLM integration, and RAG decoupling",
+      "status": "Accepted",
+      "decision": "The agent is written in TypeScript using the official Anthropic API SDK, with RAG deferred to a future Python-based MCP server to keep the host language from locking in tool implementation details.",
+      "path": "adr/003-language-llm-rag.md"
+    },
+    {
+      "id": "ADR-004",
+      "title": "TypeScript without a build step and MCP server distribution",
+      "status": "Accepted",
+      "decision": "TypeScript runs directly without compilation using Node 24's native type-stripping capability, MCP servers are started locally from sibling checkouts rather than distributed as packages, and shared conventions are copied across repositories.",
+      "path": "adr/004-typescript-without-build.md"
+    },
+    {
+      "id": "ADR-005",
+      "title": "Agent-generated content lives at its source and is read at runtime",
+      "status": "Accepted",
+      "decision": "The adr-index agent generates structured JSON summaries of ADRs in the docs repository on pull requests, which are committed to the same branch for review, and the public site fetches the index at page load from GitHub's raw content endpoint.",
+      "path": "adr/005-agent-generated-content.md"
+    }
+  ]
+}
