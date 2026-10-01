@@ -1,6 +1,6 @@
 # GitHub → Azure OIDC federation
 
-Pipelines authenticate to Azure without stored credentials: the workflow requests an OIDC token from GitHub, and Entra ID exchanges it for Azure access if the token's `sub` claim matches a registered federated credential.
+Pipelines authenticate to Azure without stored credentials: the workflow requests an OIDC token from GitHub, and Entra ID exchanges it for an access token of the repository's managed identity if the token's `sub` claim matches one of its federated credentials.
 
 ## Subject format
 
@@ -17,33 +17,24 @@ Older repositories may still emit the legacy name-based format (`repo:owner/repo
 gh api repos/mastrocola-dev/<repo>/actions/oidc/customization/sub
 ```
 
-## Registering credentials for a new repository
+## Registering a new repository
 
-One credential per subject the workflows will present. A repo with plan-on-PR and apply-on-main needs two:
+Each repository authenticates as its own user-assigned managed identity in `rg-identity` ([ADR-006](../adr/006-identity-and-secrets.md)). Everything is declared in `infra/bootstrap/identity.tf` and applied by a human Owner:
 
-```bash
-APP_ID=$(az ad app list --display-name "<app-name>" --query "[0].id" -o tsv)
+1. Add the repository and its numeric id to `github_repository_ids` (`gh api repos/mastrocola-dev/<repo> --jq .id`)
+2. Add one entry per subject the workflows present to `github_federations` — usually `ref:refs/heads/main` and `pull_request`
+3. Grant the identity only what its workflows need, in bootstrap, scoped as narrowly as the resource allows
+4. `terraform apply -parallelism=1` — Azure rejects concurrent federated credential writes on one identity (`409 Conflict`)
+5. Set the repository variables `AZURE_CLIENT_ID` (output `ci_client_ids`), `AZURE_TENANT_ID` and, when the identity holds subscription-scoped roles, `AZURE_SUBSCRIPTION_ID`
 
-az ad app federated-credential create --id $APP_ID --parameters '{
-  "name": "<org>-<repo>-main",
-  "issuer": "https://token.actions.githubusercontent.com",
-  "subject": "<subject for refs/heads/main>",
-  "audiences": ["api://AzureADTokenExchange"]
-}'
-
-az ad app federated-credential create --id $APP_ID --parameters '{
-  "name": "<org>-<repo>-pr",
-  "issuer": "https://token.actions.githubusercontent.com",
-  "subject": "<subject for pull_request>",
-  "audiences": ["api://AzureADTokenExchange"]
-}'
-```
+Workflows request `id-token: write` and log in with `azure/login`; a job with no subscription-scoped role uses `allow-no-subscriptions: true`.
 
 Constraints:
 
 - Matching is exact and case-sensitive
-- Limit of 20 federated credentials per application — delete dead ones
+- Limit of 20 federated credentials per identity
 - GitHub *environments* change the subject again (`...:environment:<name>`) and need their own credential
+- Pull requests from forks receive no OIDC token
 
 ## Diagnosing `AADSTS700213`
 
@@ -52,7 +43,7 @@ Constraints:
 The error message contains the exact subject GitHub sent. Compare it character-by-character against registered credentials:
 
 ```bash
-az ad app federated-credential list --id $APP_ID -o table
+az identity federated-credential list --identity-name id-<repo> --resource-group rg-identity -o table
 ```
 
 Common causes:
@@ -67,3 +58,5 @@ Common causes:
 ## Incident log
 
 **2026-09-03** — `infra` pipeline failed with `AADSTS700213` after the repository was transferred from a personal account to `mastrocola-dev` and renamed. Transfer + rename triggered GitHub's automatic switch to immutable subjects; the name-based credentials never matched again. Fixed by registering both subjects in the immutable format (copied verbatim from the error message) and deleting the legacy credentials. Zero drift confirmed via `terraform plan`.
+
+**2026-10-01** — Migration from a single app registration to per-repository managed identities (ADR-006). The first bootstrap apply created four of five federated credentials; the fifth failed with `409 Conflict: concurrent requests being made to the tenant` because two credentials on `id-infra` were written in parallel. Nothing was left half-created; a second apply added it. Credential additions now use `-parallelism=1`.
