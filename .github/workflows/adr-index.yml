@@ -20,8 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ github.head_ref }}
           path: docs
@@ -37,19 +38,19 @@ jobs:
           echo "Current adr/ tree $current; indexed ${indexed:-<none>}" >> "$GITHUB_STEP_SUMMARY"
 
       - if: steps.tree.outputs.current != steps.tree.outputs.indexed
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: mastrocola-dev/service-agent
           path: service-agent
 
       - if: steps.tree.outputs.current != steps.tree.outputs.indexed
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: mastrocola-dev/mcp-docs
           path: mcp-docs
 
       - if: steps.tree.outputs.current != steps.tree.outputs.indexed
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: service-agent/.nvmrc
           cache: npm
@@ -63,14 +64,25 @@ jobs:
           npm ci --prefix mcp-docs
 
       - if: steps.tree.outputs.current != steps.tree.outputs.indexed
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+
+      - if: steps.tree.outputs.current != steps.tree.outputs.indexed
         working-directory: service-agent
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TRACE_DIR: ${{ runner.temp }}/traces
-        run: node src/cli.ts --agent adr-index 'Index all ADRs' > "$RUNNER_TEMP/adrs.json"
+        run: |
+          set -euo pipefail
+          key=$(az keyvault secret show --vault-name '${{ vars.KEY_VAULT_NAME }}' --name anthropic-api-key-ci --query value -o tsv)
+          test -n "$key"
+          echo "::add-mask::$key"
+          ANTHROPIC_API_KEY="$key" node src/cli.ts --agent adr-index 'Index all ADRs' > "$RUNNER_TEMP/adrs.json"
 
       - if: always() && steps.tree.outputs.current != steps.tree.outputs.indexed
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: trace
           path: ${{ runner.temp }}/traces
@@ -107,7 +119,7 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: |
           set -euo pipefail
           test -f index/adrs.json || { echo '::error::Missing ADR index: it is generated only on pull requests touching adr/'; exit 1; }

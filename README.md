@@ -36,7 +36,8 @@ Format: context, decision, consequences. One page maximum.
 
 | Runbook | Covers |
 |---|---|
-| [github-azure-oidc](runbooks/github-azure-oidc.md) | Federated credential setup, immutable subject format, diagnosing `AADSTS700213` |
+| [github-azure-oidc](runbooks/github-azure-oidc.md) | Per-repository managed identities, immutable subject format, diagnosing `AADSTS700213` |
+| [secret-rotation](runbooks/secret-rotation.md) | Inventory, expiry tracking and rotation of every secret in Key Vault |
 | [repository-rulesets](runbooks/repository-rulesets.md) | Default branch protection shared by every repository, and how to apply it |
 | [static-web-apps](runbooks/static-web-apps.md) | Custom domain validation patterns, async operation RBAC, orphaned domain recovery, attribute ownership across pipelines |
 
@@ -49,7 +50,7 @@ Format: context, decision, consequences. One page maximum.
 - It records the tree hash of `adr/` it came from; pushes to `main` fail when that hash is stale
 - Before committing, the index is checked against `adr/`: one record per document, unique ids, and every `path` present on disk
 - The run's trace is attached to the workflow as the `trace` artifact
-- Requires the repository secret `ANTHROPIC_API_KEY`, from an Anthropic workspace with a spend limit
+- The Anthropic key is read from Key Vault (`anthropic-api-key-ci`, workspace `ci` with its own spend limit) as `id-docs` via OIDC, only in the step that runs the agent ([ADR-006](adr/006-identity-and-secrets.md)). Required repository variables: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `KEY_VAULT_NAME`
 
 ## Conventions
 
