@@ -13,12 +13,12 @@ The Static Web Apps deployment token is not stored; reset it with `az staticweba
 
 ## Rotating
 
-1. Create the new credential at the source, with an expiry when the source supports one
-2. Store it:
+1. Create the new credential at the source with a 180-day expiry; when the source caps it lower, accept the cap
+2. Store it with the **same** expiry the source shows — never later, or `secret-expiry` stays green while the credential dies at the source:
 
 ```bash
 read -rs VALUE && az keyvault secret set --vault-name kv-mastrocola-dev --name <secret> --value "$VALUE" \
-  --expires "$(date -u -d '+180 days' +%Y-%m-%dT%H:%M:%SZ)" --query attributes.expires -o tsv
+  --expires "$(date -u -d '<expiry at the source, or +180 days>' +%Y-%m-%dT%H:%M:%SZ)" --query attributes.expires -o tsv
 ```
 
 3. Run the consuming workflow once and confirm it is green (`site` in `infra` via dispatch for Cloudflare; any pull request touching `adr/` for Anthropic)
@@ -33,4 +33,4 @@ Add it to `secret_readers` in `infra/bootstrap/secrets.tf` with the identity tha
 
 ## Incident log
 
-None yet.
+**2026-10-01** — The first `anthropic-api-key-ci` was created in the Anthropic Console with a 30-day expiry and stored in Key Vault with 180 days. `secret-expiry` would have stayed green while the key expired at the source, failing the next ADR pull request. Caught by review before any failure; the key was reissued and the rule "Key Vault expiry equals the source expiry" added above.
