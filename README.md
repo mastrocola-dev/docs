@@ -23,6 +23,7 @@ Numbered, immutable once accepted, superseded rather than edited.
 | [ADR-004](adr/004-typescript-without-build.md) | TypeScript without a build step and MCP server distribution | Accepted |
 | [ADR-005](adr/005-agent-generated-content.md) | Agent-generated content lives at its source and is read at runtime | Accepted |
 | [ADR-006](adr/006-identity-and-secrets.md) | One workload identity per repository and Key Vault as the only secret store | Accepted |
+| [ADR-007](adr/007-agent-runtime.md) | Agent runtime on Functions Flex Consumption with queue-based jobs | Accepted |
 
 Format: context, decision, consequences. One page maximum.
 
