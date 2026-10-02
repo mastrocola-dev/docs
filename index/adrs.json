@@ -1,6 +1,6 @@
 {
-  "adrTree": "aab08173ad2e2a6e56dc847bb86c713aa2e8f4dd",
-  "generatedAt": "2026-10-02T14:01:12Z",
+  "adrTree": "089fdae2e18452f93a5176dcb5ddec91c22d6ef3",
+  "generatedAt": "2026-10-02T23:34:40Z",
   "model": "claude-haiku-4-5",
   "serviceAgent": "9c86035e93191b1184c2b7596fddcafd2a7f6c46",
   "adrs": [
@@ -8,49 +8,49 @@
       "id": "ADR-001",
       "title": "Multi-repo over monorepo",
       "status": "Accepted",
-      "decision": "The organization maintains one repository per concern under the mastrocola-dev organization, each with focused scope, independent versioning, and per-repository access control.",
+      "decision": "The organization adopts one repository per concern under mastrocola-dev organization, with centralized documentation in docs and per-repository operational documentation.",
       "path": "adr/001-multi-repo.md"
     },
     {
       "id": "ADR-002",
       "title": "Public site on Azure Static Web Apps with DNS as code",
       "status": "Accepted",
-      "decision": "The public site is hosted on Azure Static Web Apps with Cloudflare DNS records managed as code in Terraform.",
+      "decision": "The public site is hosted on Azure Static Web Apps free plan with DNS managed by Cloudflare Terraform provider, while content is deployed from a separate www repository using a static deployment token.",
       "path": "adr/002-public-site-hosting.md"
     },
     {
       "id": "ADR-003",
       "title": "Agent language, LLM integration, and RAG decoupling",
       "status": "Accepted",
-      "decision": "The agent is written in TypeScript using the Anthropic API directly, with RAG deferred and implemented in Python via MCP servers to decouple the host language from tool languages.",
+      "decision": "The agent is implemented in TypeScript using the direct Anthropic API, with RAG deferred and implemented separately in Python via MCP protocol decoupling.",
       "path": "adr/003-language-llm-rag.md"
     },
     {
       "id": "ADR-004",
       "title": "TypeScript without a build step and MCP server distribution",
       "status": "Accepted",
-      "decision": "TypeScript runs natively on Node 24 without a build step, MCP servers are not distributed as packages but run as independent processes, and shared conventions are replicated across repositories.",
+      "decision": "TypeScript runs natively on Node 24 without compilation, MCP servers are distributed as sibling checkouts locally or container apps in the cloud, and shared conventions are copied across repositories.",
       "path": "adr/004-typescript-without-build.md"
     },
     {
       "id": "ADR-005",
       "title": "Agent-generated content lives at its source and is read at runtime",
       "status": "Accepted",
-      "decision": "The agent generates structured content in the docs repository on every pull request, the index is validated by a tree-hash check, and the site fetches the index at runtime from raw.githubusercontent.com.",
+      "decision": "The docs pipeline runs the agent on pull requests touching ADRs and commits the generated index to the same branch, which the site fetches at runtime from raw.githubusercontent.com.",
       "path": "adr/005-agent-generated-content.md"
     },
     {
       "id": "ADR-006",
       "title": "One workload identity per repository and Key Vault as the only secret store",
       "status": "Accepted",
-      "decision": "Each repository has a user-assigned managed identity federated with GitHub OIDC, all secrets move to a single Key Vault with role-scoped access, and GitHub contains no secrets.",
+      "decision": "Each repository has a user-assigned managed identity federated with GitHub OIDC, all secrets move to Key Vault with RBAC, and static secrets are removed from GitHub entirely.",
       "path": "adr/006-identity-and-secrets.md"
     },
     {
       "id": "ADR-007",
       "title": "Agent runtime on Functions Flex Consumption with queue-based jobs",
-      "status": "Proposed",
-      "decision": "The agent runtime uses Azure Functions Flex Consumption with three function apps coordinating through Service Bus queues, storing state in Table Storage, and protecting against abuse with Cloudflare, Turnstile, and per-IP quotas.",
+      "status": "Accepted",
+      "decision": "The agent runtime deploys three function apps on Flex Consumption with Service Bus for job distribution, Table Storage for state, and layered abuse controls including rate limiting and daily spend limits.",
       "path": "adr/007-agent-runtime.md"
     }
   ]
