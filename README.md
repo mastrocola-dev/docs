@@ -55,7 +55,7 @@ Format: context, decision, consequences. One page maximum.
 
 ## Served to the agent
 
-Every push to `main` that touches `adr/`, `architecture/` or `runbooks/` redeploys [mcp-docs](https://github.com/mastrocola-dev/mcp-docs), the server that exposes these documents to the agent runtime ([ADR-007](adr/007-agent-runtime.md)). [`mcp-docs.yml`](.github/workflows/mcp-docs.yml) checks the server out at a pinned tag, copies the three directories into the package and publishes it as `id-docs` over OIDC, then waits until the app lists the `mcp` function.
+Every push to `main` that touches `adr/`, `architecture/` or `runbooks/` redeploys [mcp-docs](https://github.com/mastrocola-dev/mcp-docs), the server that exposes these documents to the agent runtime ([ADR-007](adr/007-agent-runtime.md)). [`mcp-docs.yml`](.github/workflows/mcp-docs.yml) checks the server out at a pinned tag, copies the three directories into the package and posts it to the app's publish endpoint as `id-docs` over OIDC, then waits until the app lists the `mcp` function. The package is posted directly rather than through `az functionapp deployment`, whose final health check calls an administrative address that the app's Entra authentication answers with 401.
 
 - The deploy lives here, not in `mcp-docs`: one repository triggering another's workflow would need a stored token, and GitHub holds no secrets ([ADR-006](adr/006-identity-and-secrets.md))
 - A new server version reaches production by changing the tag in the workflow, through a pull request in this repository
