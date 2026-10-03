@@ -53,6 +53,14 @@ Format: context, decision, consequences. One page maximum.
 - The run's trace is attached to the workflow as the `trace` artifact
 - The Anthropic key is read from Key Vault (`anthropic-api-key-ci`, workspace `ci` with its own spend limit) as `id-docs` via OIDC, only in the step that runs the agent ([ADR-006](adr/006-identity-and-secrets.md)). Required repository variables: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `KEY_VAULT_NAME`
 
+## Served to the agent
+
+Every push to `main` that touches `adr/`, `architecture/` or `runbooks/` redeploys [mcp-docs](https://github.com/mastrocola-dev/mcp-docs), the server that exposes these documents to the agent runtime ([ADR-007](adr/007-agent-runtime.md)). [`mcp-docs.yml`](.github/workflows/mcp-docs.yml) checks the server out at a pinned tag, copies the three directories into the package and publishes it as `id-docs` over OIDC, then waits until the app lists the `mcp` function.
+
+- The deploy lives here, not in `mcp-docs`: one repository triggering another's workflow would need a stored token, and GitHub holds no secrets ([ADR-006](adr/006-identity-and-secrets.md))
+- A new server version reaches production by changing the tag in the workflow, through a pull request in this repository
+- Required repository variables, besides those above: `AZURE_SUBSCRIPTION_ID`, `MCP_DOCS_FUNCTION_APP`
+
 ## Conventions
 
 - Documentation that explains *architecture* lives here; documentation that explains *operation of a specific repo* lives in that repo's README
