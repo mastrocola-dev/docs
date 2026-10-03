@@ -41,12 +41,14 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: mastrocola-dev/service-agent
+          ref: v0.2.0
           path: service-agent
 
       - if: steps.tree.outputs.current != steps.tree.outputs.indexed
         uses: actions/checkout@v6
         with:
           repository: mastrocola-dev/mcp-docs
+          ref: v0.2.0
           path: mcp-docs
 
       - if: steps.tree.outputs.current != steps.tree.outputs.indexed
