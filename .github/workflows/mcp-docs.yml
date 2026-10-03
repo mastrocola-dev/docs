@@ -1,0 +1,68 @@
+name: mcp-docs
+
+on:
+  push:
+    branches: [main]
+    paths: ['adr/**', 'architecture/**', 'runbooks/**', '.github/workflows/mcp-docs.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: mcp-docs
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: docs
+
+      - uses: actions/checkout@v6
+        with:
+          repository: mastrocola-dev/mcp-docs
+          ref: v0.2.0
+          path: mcp-docs
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: mcp-docs/.nvmrc
+          cache: npm
+          cache-dependency-path: mcp-docs/package-lock.json
+
+      - run: npm ci --omit=dev --prefix mcp-docs
+
+      - name: Package the server with the documents it serves
+        run: |
+          set -euo pipefail
+          mkdir mcp-docs/docs
+          cp -r docs/adr docs/architecture docs/runbooks mcp-docs/docs/
+          chmod -R a+rX mcp-docs
+          cd mcp-docs
+          zip -qr "$RUNNER_TEMP/mcp-docs.zip" docs src node_modules host.json package.json
+
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy
+        run: |
+          set -euo pipefail
+          az functionapp deployment source config-zip --resource-group rg-portfolio-dev --name '${{ vars.MCP_DOCS_FUNCTION_APP }}' --src "$RUNNER_TEMP/mcp-docs.zip" --output none
+
+      - name: Confirm the host loaded the function
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            functions=$(az functionapp function list --resource-group rg-portfolio-dev --name '${{ vars.MCP_DOCS_FUNCTION_APP }}' --query '[].name' --output tsv || true)
+            if grep -q 'mcp' <<< "$functions"; then exit 0; fi
+            sleep 20
+          done
+          echo '::error::The function app lists no mcp function: the host did not load the package'
+          exit 1
