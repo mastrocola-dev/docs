@@ -27,18 +27,27 @@ Numbered, immutable once accepted, superseded rather than edited.
 
 Format: context, decision, consequences. One page maximum.
 
+An accepted record is never edited, so later records correct earlier ones in place of a rewrite:
+
+| Record | Corrected by | What changed |
+|---|---|---|
+| ADR-003 | [ADR-004](adr/004-typescript-without-build.md) | The host has no build step |
+| ADR-003 | [ADR-007](adr/007-agent-runtime.md) | The direct Anthropic API stays at runtime; the planned Foundry re-evaluation is closed |
+| ADR-004 | [ADR-007](adr/007-agent-runtime.md) | An MCP server in the cloud is a function app, not a Container App |
+
 ## Architecture
 
 | Document | Describes |
 |---|---|
 | [agent-v1](architecture/agent-v1.md) | Single-agent baseline: control loop, MCP client, guardrails, state, observability |
+| [agent-runtime](architecture/agent-runtime.md) | What runs when a visitor asks a question: components, one request end to end, limits, trust boundaries |
 
 ## Runbooks
 
 | Runbook | Covers |
 |---|---|
-| [github-azure-oidc](runbooks/github-azure-oidc.md) | Per-repository managed identities, immutable subject format, diagnosing `AADSTS700213` |
-| [secret-rotation](runbooks/secret-rotation.md) | Inventory, expiry tracking and rotation of every secret in Key Vault |
+| [github-azure-oidc](runbooks/github-azure-oidc.md) | Per-repository managed identities, immutable subject format, diagnosing `AADSTS700213` and `AADSTS700016` |
+| [secret-rotation](runbooks/secret-rotation.md) | Inventory, expiry tracking and rotation of every secret and certificate in Key Vault |
 | [repository-rulesets](runbooks/repository-rulesets.md) | Default branch protection shared by every repository, and how to apply it |
 | [static-web-apps](runbooks/static-web-apps.md) | Custom domain validation patterns, async operation RBAC, orphaned domain recovery, attribute ownership across pipelines |
 
@@ -64,5 +73,5 @@ Every push to `main` that touches `adr/`, `architecture/` or `runbooks/` redeplo
 ## Conventions
 
 - Documentation that explains *architecture* lives here; documentation that explains *operation of a specific repo* lives in that repo's README
-- Diagram sources (`.mermaid`, `.drawio`) are committed alongside their exports
+- Diagram sources (`.mermaid`, `.drawio`) are committed alongside their exports; a Mermaid block inside a document is its own source
 - English for all published content
