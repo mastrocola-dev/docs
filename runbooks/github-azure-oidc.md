@@ -25,7 +25,13 @@ Each repository authenticates as its own user-assigned managed identity in `rg-i
 2. Add one entry per subject the workflows present to `github_federations` — usually `ref:refs/heads/main` and `pull_request`
 3. Grant the identity only what its workflows need, in bootstrap, scoped as narrowly as the resource allows
 4. `terraform apply -parallelism=1` — Azure rejects concurrent federated credential writes on one identity (`409 Conflict`)
-5. Set the repository variables `AZURE_CLIENT_ID` (output `ci_client_ids`), `AZURE_TENANT_ID` and, when the identity holds subscription-scoped roles, `AZURE_SUBSCRIPTION_ID`
+5. Set the repository variables `AZURE_CLIENT_ID` (output `ci_client_ids`), `AZURE_TENANT_ID` and, when the identity holds subscription-scoped roles, `AZURE_SUBSCRIPTION_ID`. Read the client ID, never type it:
+
+```bash
+az identity show --name id-<repo> --resource-group rg-identity --query clientId -o tsv
+```
+
+A repository that deploys a function app is also added to `deployers` in `infra/bootstrap/runtime.tf`, which grants it rights on that one app.
 
 Workflows request `id-token: write` and log in with `azure/login`; a job with no subscription-scoped role uses `allow-no-subscriptions: true`.
 
@@ -55,8 +61,16 @@ Common causes:
 | Subject ends `:environment:<name>` | Workflow uses a GitHub environment — register that subject |
 | Names differ in case | Case-sensitive match |
 
+## Diagnosing `AADSTS700016`
+
+`Application with identifier '<id>' was not found in the directory`
+
+The login never reached the federated credentials: `AZURE_CLIENT_ID` does not name an identity of the tenant. Compare the variable with the command in step 5 above. The usual cause is another identifier pasted in its place, such as the repository's numeric id.
+
 ## Incident log
 
 **2026-09-03** — `infra` pipeline failed with `AADSTS700213` after the repository was transferred from a personal account to `mastrocola-dev` and renamed. Transfer + rename triggered GitHub's automatic switch to immutable subjects; the name-based credentials never matched again. Fixed by registering both subjects in the immutable format (copied verbatim from the error message) and deleting the legacy credentials. Zero drift confirmed via `terraform plan`.
 
 **2026-10-01** — Migration from a single app registration to per-repository managed identities (ADR-006). The first bootstrap apply created four of five federated credentials; the fifth failed with `409 Conflict: concurrent requests being made to the tenant` because two credentials on `id-infra` were written in parallel. Nothing was left half-created; a second apply added it. Credential additions now use `-parallelism=1`.
+
+**2026-10-04** — First deploy of `service-api` failed at `azure/login` with `AADSTS700016`. The `AZURE_CLIENT_ID` variable held the repository's numeric id, typed by hand from a list of identifiers. Fixed by reading the client ID from Azure; the registration steps now give the command.
